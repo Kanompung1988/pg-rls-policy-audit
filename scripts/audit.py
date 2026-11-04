@@ -31,7 +31,9 @@ def statements(sql):
                 if m:
                     tag = m.group(); state='dollar'; masked[i:i+len(tag)] = ' '*len(tag); i += len(tag); continue
             if ch == ';':
-                out.append((''.join(masked[start:i]), sql.count('\n', 0, start)+1))
+                segment = ''.join(masked[start:i])
+                offset = len(segment) - len(segment.lstrip())
+                out.append((segment, sql.count('\n', 0, start+offset)+1))
                 start = i + 1
         elif state == 'ident':
             if ch == '"':
@@ -58,7 +60,9 @@ def statements(sql):
             masked[i] = '\n' if ch == '\n' else ' '
         i += 1
     if ''.join(masked[start:]).strip():
-        out.append((''.join(masked[start:]), sql.count('\n', 0, start)+1))
+        segment = ''.join(masked[start:])
+        offset = len(segment) - len(segment.lstrip())
+        out.append((segment, sql.count('\n', 0, start+offset)+1))
     return out
 
 
