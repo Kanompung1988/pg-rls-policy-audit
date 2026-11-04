@@ -34,7 +34,13 @@ class RlsTests(unittest.TestCase):
     def test_ignore_string_body(self): self.assertEqual(self.codes("SELECT 'CREATE POLICY p ON t USING (true);';"), [])
     def test_ignore_dollar_body(self): self.assertEqual(self.codes('DO $tag$ CREATE POLICY p ON t USING (true); $tag$;'), [])
     def test_split_sql(self): self.assertEqual(len(a.statements("select 'a;b'; select 1;")), 2)
-    def test_line(self): self.assertEqual(a.audit('\n\nCREATE POLICY p ON t;')[0]['line'], 1)
+    def test_line_after_semicolon_and_comment(self):
+        sql = 'SELECT 1;\n-- ignored comment\n\nCREATE POLICY p ON t USING (true);'
+        self.assertEqual(a.audit(sql)[0]['line'], 4)
+    def test_line_after_block_comment(self):
+        sql = '/* ignored\ncomment */\nCREATE POLICY p ON t USING (true);'
+        self.assertEqual(a.audit(sql)[0]['line'], 3)
+    def test_line(self): self.assertEqual(a.audit('\n\nCREATE POLICY p ON t;')[0]['line'], 3)
     def test_multiline(self): self.assertIn('OWNER_BYPASS_REVIEW', self.codes('ALTER\nTABLE x\nENABLE ROW LEVEL SECURITY;'))
     def test_multiple_tables(self): self.assertIn('RLS_DISABLED', self.codes('ALTER TABLE a DISABLE ROW LEVEL SECURITY; ALTER TABLE b ENABLE ROW LEVEL SECURITY;'))
     def test_json_cli(self):
